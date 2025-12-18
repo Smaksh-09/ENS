@@ -206,20 +206,18 @@ export function NetworkGraph({ onNodeClick }: NetworkGraphProps) {
             ctx.fillText(label, x, y + nodeRadius + fontSize + 2);
           }
         }}
-        nodePointerAreaPaint={(node, color, ctx) => {
-          const x = node.x as number;
-          const y = node.y as number;
-          if (x === undefined || y === undefined) return;
-          ctx.beginPath();
-          ctx.arc(x, y, 12, 0, 2 * Math.PI);
-          ctx.fillStyle = color;
-          ctx.fill();
-        }}
         onNodeClick={(node) => {
           console.log("Clicked node:", node);
           const graphNode = node as GraphNode;
           if (onNodeClick && graphNode.ensName) {
             console.log("Calling onNodeClick with:", graphNode.ensName);
+            onNodeClick(graphNode.ensName);
+          }
+        }}
+        onNodeRightClick={(node) => {
+          // Backup click handler for mobile/touch
+          const graphNode = node as GraphNode;
+          if (onNodeClick && graphNode.ensName) {
             onNodeClick(graphNode.ensName);
           }
         }}
@@ -233,8 +231,19 @@ export function NetworkGraph({ onNodeClick }: NetworkGraphProps) {
         cooldownTicks={100}
         enablePanInteraction={true}
         enableZoomInteraction={true}
-        enableNodeDrag={true}
+        enableNodeDrag={false}
         d3VelocityDecay={0.3}
+        onNodeDragEnd={() => {}}
+        nodePointerAreaPaint={(node, color, ctx) => {
+          const x = node.x as number;
+          const y = node.y as number;
+          if (x === undefined || y === undefined) return;
+          // Larger touch target for mobile
+          ctx.beginPath();
+          ctx.arc(x, y, 20, 0, 2 * Math.PI);
+          ctx.fillStyle = color;
+          ctx.fill();
+        }}
       />
 
       {/* Empty state */}
