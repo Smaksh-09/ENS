@@ -251,7 +251,7 @@ export function NetworkGraph({ onNodeClick }: NetworkGraphProps) {
       {/* Add Connection Button */}
       <button
         onClick={() => setIsFormOpen(true)}
-        className="glass-strong glow-cyan absolute right-4 top-4 z-10 flex items-center gap-2 rounded-lg border-primary/30 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-primary/20 hover:border-primary/50 sm:right-6 sm:top-6 sm:px-4 sm:py-2.5"
+        className="glass-strong glow-cyan fixed right-4 top-20 z-50 flex items-center gap-2 rounded-lg border-primary/30 px-3 py-2 text-sm font-semibold text-white shadow-2xl transition-all hover:bg-primary/20 hover:border-primary/50 md:absolute md:right-6 md:top-6 md:px-4 md:py-2.5"
       >
         <Plus className="h-4 w-4" />
         <span className="hidden sm:inline">Add Connection</span>
@@ -260,7 +260,7 @@ export function NetworkGraph({ onNodeClick }: NetworkGraphProps) {
 
       {/* Add Connection Form Overlay */}
       {isFormOpen && (
-        <div className="glass-strong absolute inset-x-4 top-16 z-20 w-auto rounded-xl border-white/15 p-4 sm:inset-x-auto sm:right-6 sm:top-20 sm:w-80 sm:p-5">
+        <div className="glass-strong fixed inset-x-4 top-32 z-[60] w-auto rounded-xl border-white/15 p-4 shadow-2xl md:absolute md:inset-x-auto md:right-6 md:top-20 md:w-80 md:p-5">
           <h3 className="mb-4 text-lg font-semibold tracking-tight text-white">Add Connection</h3>
           <form onSubmit={handleAddConnection} className="space-y-4">
             <div>
