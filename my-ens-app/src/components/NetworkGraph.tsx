@@ -71,16 +71,26 @@ export function NetworkGraph({ onNodeClick }: NetworkGraphProps) {
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
         setDimensions({
-          width: containerRef.current.offsetWidth,
-          height: containerRef.current.offsetHeight,
+          width: rect.width,
+          height: rect.height,
         });
       }
     };
 
+    // Initial update with a slight delay to ensure layout is ready
+    const timeout = setTimeout(updateDimensions, 100);
+    
     updateDimensions();
     window.addEventListener("resize", updateDimensions);
-    return () => window.removeEventListener("resize", updateDimensions);
+    window.addEventListener("orientationchange", updateDimensions);
+    
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener("resize", updateDimensions);
+      window.removeEventListener("orientationchange", updateDimensions);
+    };
   }, []);
 
   // Handle form submission to add new connection
@@ -120,36 +130,90 @@ export function NetworkGraph({ onNodeClick }: NetworkGraphProps) {
 
   if (isLoading) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-zinc-950">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="glass-strong rounded-2xl border-primary/30 p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary glow-cyan" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div ref={containerRef} className="relative h-full w-full bg-zinc-950">
+    <div ref={containerRef} className="relative h-full w-full">
       {/* Graph Canvas */}
       <ForceGraph2D
         graphData={graphData}
         width={dimensions.width}
         height={dimensions.height}
-        nodeRelSize={8}
-        nodeColor={() => "#8b5cf6"}
-        nodeLabel={(node) => (node as GraphNode).ensName}
-        nodeCanvasObjectMode={() => "after"}
+        nodeRelSize={6}
+        nodeCanvasObjectMode={() => "replace"}
         nodeCanvasObject={(node, ctx, globalScale) => {
           const label = (node as GraphNode).ensName;
-          const fontSize = 14 / globalScale;
+          const fontSize = 13 / globalScale;
+          const nodeRadius = 6;
           const x = node.x as number;
           const y = node.y as number;
           
-          if (x === undefined || y === undefined || !label) return;
-          
-          ctx.font = `${fontSize}px Sans-Serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillStyle = "#ffffff";
-          ctx.fillText(label, x, y + 14);
+          if (x === undefined || y === undefined) return;
+
+          // Outer glow (largest)
+          const gradient1 = ctx.createRadialGradient(x, y, 0, x, y, nodeRadius * 3);
+          gradient1.addColorStop(0, "rgba(0, 240, 255, 0.2)");
+          gradient1.addColorStop(0.5, "rgba(0, 240, 255, 0.05)");
+          gradient1.addColorStop(1, "transparent");
+          ctx.fillStyle = gradient1;
+          ctx.beginPath();
+          ctx.arc(x, y, nodeRadius * 3, 0, 2 * Math.PI);
+          ctx.fill();
+
+          // Middle glow
+          const gradient2 = ctx.createRadialGradient(x, y, 0, x, y, nodeRadius * 1.5);
+          gradient2.addColorStop(0, "rgba(0, 240, 255, 0.6)");
+          gradient2.addColorStop(1, "rgba(0, 240, 255, 0.1)");
+          ctx.fillStyle = gradient2;
+          ctx.beginPath();
+          ctx.arc(x, y, nodeRadius * 1.5, 0, 2 * Math.PI);
+          ctx.fill();
+
+          // Core node
+          const coreGradient = ctx.createRadialGradient(x, y, 0, x, y, nodeRadius);
+          coreGradient.addColorStop(0, "#ffffff");
+          coreGradient.addColorStop(0.5, "#00f0ff");
+          coreGradient.addColorStop(1, "#627EEA");
+          ctx.fillStyle = coreGradient;
+          ctx.beginPath();
+          ctx.arc(x, y, nodeRadius, 0, 2 * Math.PI);
+          ctx.fill();
+
+          // Inner highlight
+          ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+          ctx.beginPath();
+          ctx.arc(x - 1, y - 1, nodeRadius * 0.4, 0, 2 * Math.PI);
+          ctx.fill();
+
+          // Label
+          if (label) {
+            ctx.font = `600 ${fontSize}px Inter, sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            
+            // Label shadow
+            ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+            ctx.fillText(label, x, y + nodeRadius + fontSize + 3);
+            
+            // Label text
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText(label, x, y + nodeRadius + fontSize + 2);
+          }
+        }}
+        nodePointerAreaPaint={(node, color, ctx) => {
+          const x = node.x as number;
+          const y = node.y as number;
+          if (x === undefined || y === undefined) return;
+          ctx.beginPath();
+          ctx.arc(x, y, 12, 0, 2 * Math.PI);
+          ctx.fillStyle = color;
+          ctx.fill();
         }}
         onNodeClick={(node) => {
           console.log("Clicked node:", node);
@@ -159,72 +223,81 @@ export function NetworkGraph({ onNodeClick }: NetworkGraphProps) {
             onNodeClick(graphNode.ensName);
           }
         }}
-        linkColor={() => "rgba(139, 92, 246, 0.5)"}
-        linkWidth={2}
-        linkDirectionalParticles={2}
-        linkDirectionalParticleWidth={2}
-        linkDirectionalParticleColor={() => "#c4b5fd"}
+        linkColor={() => "rgba(255, 255, 255, 0.15)"}
+        linkWidth={1.5}
+        linkDirectionalParticles={3}
+        linkDirectionalParticleWidth={3}
+        linkDirectionalParticleColor={() => "#00f0ff"}
+        linkDirectionalParticleSpeed={0.006}
         backgroundColor="transparent"
         cooldownTicks={100}
+        enablePanInteraction={true}
+        enableZoomInteraction={true}
+        enableNodeDrag={true}
+        d3VelocityDecay={0.3}
       />
 
       {/* Empty state */}
       {graphData.nodes.length === 0 && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-400">
-          <p className="text-lg">No connections yet</p>
-          <p className="text-sm">Add ENS names to build your network</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <div className="glass-strong rounded-2xl border-white/15 p-8 text-center">
+            <div className="mb-4 text-6xl opacity-30">◯</div>
+            <p className="text-lg font-semibold tracking-tight text-white">No connections yet</p>
+            <p className="mt-2 text-sm text-muted-foreground">Add ENS names to build your network</p>
+          </div>
         </div>
       )}
 
       {/* Add Connection Button */}
       <button
         onClick={() => setIsFormOpen(true)}
-        className="absolute right-4 top-4 flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all hover:bg-violet-700 hover:shadow-violet-500/25"
+        className="glass-strong glow-cyan absolute right-4 top-4 z-10 flex items-center gap-2 rounded-lg border-primary/30 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-primary/20 hover:border-primary/50 sm:right-6 sm:top-6 sm:px-4 sm:py-2.5"
       >
         <Plus className="h-4 w-4" />
-        Add Connection
+        <span className="hidden sm:inline">Add Connection</span>
+        <span className="sm:hidden">Add</span>
       </button>
 
       {/* Add Connection Form Overlay */}
       {isFormOpen && (
-        <div className="absolute right-4 top-16 w-80 rounded-xl border border-zinc-800 bg-zinc-900 p-4 shadow-2xl">
-          <h3 className="mb-4 text-lg font-semibold text-white">Add Connection</h3>
+        <div className="glass-strong absolute inset-x-4 top-16 z-20 w-auto rounded-xl border-white/15 p-4 sm:inset-x-auto sm:right-6 sm:top-20 sm:w-80 sm:p-5">
+          <h3 className="mb-4 text-lg font-semibold tracking-tight text-white">Add Connection</h3>
           <form onSubmit={handleAddConnection} className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm text-zinc-400">Source ENS</label>
+              <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Source ENS</label>
               <input
                 type="text"
                 value={sourceEns}
                 onChange={(e) => setSourceEns(e.target.value)}
                 placeholder="vitalik.eth"
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                className="glass w-full rounded-lg border-white/15 bg-white/5 px-3 py-2.5 font-mono text-sm text-white placeholder-muted-foreground transition-all focus:border-primary focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 disabled={isSubmitting}
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-zinc-400">Target ENS</label>
+              <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Target ENS</label>
               <input
                 type="text"
                 value={targetEns}
                 onChange={(e) => setTargetEns(e.target.value)}
                 placeholder="balajis.eth"
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                className="glass w-full rounded-lg border-white/15 bg-white/5 px-3 py-2.5 font-mono text-sm text-white placeholder-muted-foreground transition-all focus:border-primary focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 disabled={isSubmitting}
               />
             </div>
 
             {error && (
-              <p className="text-sm text-red-400">{error}</p>
+              <p className="text-sm text-destructive">{error}</p>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => {
                   setIsFormOpen(false);
                   setError(null);
                 }}
-                className="flex-1 rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-300 transition-colors hover:bg-zinc-800"
+                className="glass flex-1 rounded-lg border-white/15 px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-white/10 hover:text-white"
                 disabled={isSubmitting}
               >
                 Cancel
@@ -232,7 +305,7 @@ export function NetworkGraph({ onNodeClick }: NetworkGraphProps) {
               <button
                 type="submit"
                 disabled={isSubmitting || !sourceEns.trim() || !targetEns.trim()}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="glow-cyan flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary/20 border border-primary/30 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary/30 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-primary/20"
               >
                 {isSubmitting ? (
                   <>

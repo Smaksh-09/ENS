@@ -20,24 +20,24 @@ type ProfileCardProps = {
 
 function ProfileCardSkeleton() {
   return (
-    <Card className="w-full max-w-md">
+    <Card className="glass w-full max-w-md border-white/10">
       <CardHeader className="items-center">
-        <Skeleton className="h-24 w-24 rounded-full" />
-        <Skeleton className="mt-4 h-6 w-40" />
-        <Skeleton className="mt-2 h-4 w-64" />
+        <Skeleton className="h-24 w-24 rounded-full bg-white/10" />
+        <Skeleton className="mt-4 h-6 w-40 bg-white/10" />
+        <Skeleton className="mt-2 h-4 w-64 bg-white/10" />
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-3">
-          <Skeleton className="h-5 w-5" />
-          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-5 w-5 bg-white/10" />
+          <Skeleton className="h-4 w-32 bg-white/10" />
         </div>
         <div className="flex items-center gap-3">
-          <Skeleton className="h-5 w-5" />
-          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-5 w-5 bg-white/10" />
+          <Skeleton className="h-4 w-28 bg-white/10" />
         </div>
         <div className="flex items-center gap-3">
-          <Skeleton className="h-5 w-5" />
-          <Skeleton className="h-4 w-36" />
+          <Skeleton className="h-5 w-5 bg-white/10" />
+          <Skeleton className="h-4 w-36 bg-white/10" />
         </div>
       </CardContent>
     </Card>
@@ -53,7 +53,7 @@ export function ProfileCard({ profile, isLoading }: ProfileCardProps) {
 
   if (!profile || !profile.address) {
     return (
-      <Card className="w-full max-w-md">
+      <Card className="glass w-full max-w-md border-white/10">
         <CardContent className="py-12 text-center">
           <p className="text-muted-foreground">ENS name not found</p>
         </CardContent>
@@ -72,10 +72,10 @@ export function ProfileCard({ profile, isLoading }: ProfileCardProps) {
   const truncatedAddress = `${profile.address.slice(0, 6)}...${profile.address.slice(-4)}`;
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="glass w-full max-w-md border-white/10">
       <CardHeader className="items-center text-center">
         {profile.avatar ? (
-          <div className="relative h-24 w-24 overflow-hidden rounded-full ring-2 ring-border">
+          <div className="glow-cyan relative h-20 w-20 overflow-hidden rounded-full ring-2 ring-primary/30 sm:h-24 sm:w-24">
             <Image
               src={profile.avatar}
               alt={`${profile.ensName} avatar`}
@@ -85,19 +85,21 @@ export function ProfileCard({ profile, isLoading }: ProfileCardProps) {
             />
           </div>
         ) : (
-          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-3xl font-bold text-white">
+          <div className="glow-ethereum flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 text-2xl font-bold text-white ring-2 ring-primary/30 sm:h-24 sm:w-24 sm:text-3xl">
             {profile.ensName.charAt(0).toUpperCase()}
           </div>
         )}
-        <CardTitle className="mt-4 text-xl">{profile.ensName}</CardTitle>
+        <CardTitle className="mt-4 text-lg tracking-tight sm:text-xl">
+          {profile.ensName}
+        </CardTitle>
         <CardDescription>
           <button
             onClick={copyAddress}
-            className="inline-flex items-center gap-1.5 font-mono text-sm transition-colors hover:text-foreground"
+            className="inline-flex items-center gap-1.5 font-mono text-xs transition-colors hover:text-primary"
           >
             {truncatedAddress}
             {copied ? (
-              <Check className="h-3.5 w-3.5 text-green-500" />
+              <Check className="h-3.5 w-3.5 text-primary" />
             ) : (
               <Copy className="h-3.5 w-3.5" />
             )}
@@ -105,16 +107,18 @@ export function ProfileCard({ profile, isLoading }: ProfileCardProps) {
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2">
         {profile.twitter && (
           <a
             href={`https://twitter.com/${profile.twitter}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-accent"
+            className="glass flex items-center gap-3 rounded-lg border-white/10 p-3 transition-all hover:bg-white/10 hover:glow-cyan"
           >
-            <Twitter className="h-5 w-5 text-[#1DA1F2]" />
-            <span className="text-sm">@{profile.twitter}</span>
+            <Twitter className="h-4 w-4 flex-shrink-0 text-primary sm:h-5 sm:w-5" />
+            <span className="truncate text-sm text-muted-foreground">
+              @{profile.twitter}
+            </span>
           </a>
         )}
 
@@ -123,25 +127,29 @@ export function ProfileCard({ profile, isLoading }: ProfileCardProps) {
             href={`https://github.com/${profile.github}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-accent"
+            className="glass flex items-center gap-3 rounded-lg border-white/10 p-3 transition-all hover:bg-white/10 hover:glow-cyan"
           >
-            <Github className="h-5 w-5" />
-            <span className="text-sm">{profile.github}</span>
+            <Github className="h-4 w-4 flex-shrink-0 text-white sm:h-5 sm:w-5" />
+            <span className="truncate text-sm text-muted-foreground">
+              {profile.github}
+            </span>
           </a>
         )}
 
         {profile.email && (
           <a
             href={`mailto:${profile.email}`}
-            className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-accent"
+            className="glass flex items-center gap-3 rounded-lg border-white/10 p-3 transition-all hover:bg-white/10 hover:glow-cyan"
           >
-            <Mail className="h-5 w-5 text-rose-500" />
-            <span className="text-sm">{profile.email}</span>
+            <Mail className="h-4 w-4 flex-shrink-0 text-secondary sm:h-5 sm:w-5" />
+            <span className="truncate text-sm text-muted-foreground">
+              {profile.email}
+            </span>
           </a>
         )}
 
         {!profile.twitter && !profile.github && !profile.email && (
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="py-4 text-center text-sm text-muted-foreground opacity-70">
             No social links available
           </p>
         )}
